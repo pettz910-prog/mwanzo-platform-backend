@@ -1,0 +1,98 @@
+# ==============================================
+# Mwanzo Course Platform - Application Configuration
+# Environment: Development
+# ==============================================
+
+spring:
+  application:
+    name: mwanzo-course-platform-backend
+
+  # ==============================================
+  # DATABASE CONFIGURATION (PostgreSQL)
+  # ==============================================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mwanzo_database
+    username: postgres
+    password: janet-marketing
+    driver-class-name: org.postgresql.Driver
+    
+    # HikariCP Connection Pool Settings (Production-grade)
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: MwanzoCoursePool
+
+  # ==============================================
+  # JPA/HIBERNATE CONFIGURATION
+  # ==============================================
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update  # Options: none, validate, update, create, create-drop
+    show-sql: true  # Set to false in production
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false  # Prevents lazy loading issues
+
+  # ==============================================
+  # LOGGING CONFIGURATION
+  # ==============================================
+logging:
+  level:
+    root: INFO
+    com.mwanzo: DEBUG  # Our application logs
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ==============================================
+# SERVER CONFIGURATION
+# ==============================================
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: false
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+# ==============================================
+# ACTUATOR CONFIGURATION (Health & Metrics)
+# ==============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# ==============================================
+# APPLICATION-SPECIFIC CONFIGURATION
+# ==============================================
+app:
+  name: Mwanzo Skills Campus
+  version: 1.0.0
+  description: E-Learning and Job Placement Platform for Kenya

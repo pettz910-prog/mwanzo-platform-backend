@@ -15,7 +15,7 @@ spring:
     username: postgres
     password: janet-marketing
     driver-class-name: org.postgresql.Driver
-    
+
     # HikariCP Connection Pool Settings (Production-grade)
     hikari:
       maximum-pool-size: 10
@@ -96,3 +96,45 @@ app:
   name: Mwanzo Skills Campus
   version: 1.0.0
   description: E-Learning and Job Placement Platform for Kenya
+  base-url: http://localhost:8080  # Change to production URL when deploying
+
+# ==============================================
+# JWT CONFIGURATION
+# ==============================================
+jwt:
+  secret: mwanzo-secret-key-change-this-in-production-minimum-256-bits-for-security
+  expiration: 86400000  # 24 hours in milliseconds
+
+# ==============================================
+# PAYHERO CONFIGURATION (M-Pesa Integration)
+# ==============================================
+payhero:
+  base-url: https://backend.payhero.co.ke/api/v2/payments
+  api-username: ${PAYHERO_USERNAME:your-payhero-username}
+  api-password: ${PAYHERO_PASSWORD:your-payhero-password}
+  channel-id: ${PAYHERO_CHANNEL_ID:your-channel-id}
+  callback-url: ${app.base-url}/api/v1/payments/callback
+
+# ==============================================
+# PAYMENT CONFIGURATION
+# ==============================================
+payment:
+  currency: KES
+  timeout-minutes: 5  # Mark pending payments as failed after 5 minutes
+
+# ==============================================
+# AWS S3 CONFIGURATION (LocalStack for Development)
+# ==============================================
+aws:
+  s3:
+    endpoint: ${AWS_S3_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:us-east-1}
+    bucket: ${AWS_S3_BUCKET:mwanzo-videos}
+    access-key: ${AWS_ACCESS_KEY:test}
+    secret-key: ${AWS_SECRET_KEY:test}
+    use-localstack: ${USE_LOCALSTACK:true}
+
+# CloudFront configuration (Production only)
+cloudfront:
+  domain: ${CLOUDFRONT_DOMAIN:https://cdn.mwanzoskills.com}
+  enabled: ${CLOUDFRONT_ENABLED:false}

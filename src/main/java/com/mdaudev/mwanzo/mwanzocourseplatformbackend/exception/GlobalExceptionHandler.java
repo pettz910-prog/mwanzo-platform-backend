@@ -116,6 +116,32 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle BadCredentialsException (401).
+     * Thrown when login credentials are invalid.
+     *
+     * @param ex BadCredentialsException
+     * @param request Web request
+     * @return Error response with 401 status
+     */
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(
+            org.springframework.security.authentication.BadCredentialsException ex,
+            WebRequest request) {
+
+        log.error("Bad credentials: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
      * Handle generic RuntimeException (500).
      * Catch-all for unexpected errors.
      *

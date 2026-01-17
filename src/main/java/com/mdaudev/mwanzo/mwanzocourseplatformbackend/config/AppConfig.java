@@ -1,10 +1,10 @@
 package com.mdaudev.mwanzo.mwanzocourseplatformbackend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Application Configuration
@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * Beans:
  * - ObjectMapper: For JSON serialization/deserialization
+ * - PasswordEncoder: For secure password hashing
  *
  * @author Mwanzo Development Team
  * @version 1.0
@@ -26,26 +27,26 @@ public class AppConfig {
      * Used for serializing/deserializing course learning objectives,
      * requirements, and other JSON fields.
      *
-     * Configuration:
-     * - Registers JavaTimeModule for LocalDateTime support
-     * - Disables writing dates as timestamps (uses ISO-8601 instead)
-     * - Pretty-prints JSON in development (can be disabled in production)
-     *
      * @return Configured ObjectMapper instance
      */
     @Bean
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
+        return new ObjectMapper();
+    }
 
-        // Register module for Java 8 Date/Time API (LocalDateTime, etc.)
-        mapper.registerModule(new JavaTimeModule());
-
-        // Write dates as strings (ISO-8601) instead of timestamps
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        // Pretty print JSON (optional - can disable in production)
-        // mapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-        return mapper;
+    /**
+     * Configure PasswordEncoder bean for secure password hashing.
+     * Uses BCrypt with strength 12 (2^12 = 4096 rounds).
+     *
+     * BCrypt benefits:
+     * - Automatically salts passwords
+     * - Computationally expensive (slows brute force attacks)
+     * - Industry standard for password hashing
+     *
+     * @return BCryptPasswordEncoder instance
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
     }
 }

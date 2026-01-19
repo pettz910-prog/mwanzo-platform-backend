@@ -1,0 +1,48 @@
+# Terraform Variables Configuration
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to git (it contains secrets)
+
+# AWS Configuration
+aws_region  = "us-east-1"
+environment = "prod"
+project_name = "mwanzo"
+
+# Network Configuration
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = 2
+
+# Database Configuration (RDS PostgreSQL)
+db_instance_class    = "db.t3.small"      # or db.t3.micro for testing
+db_allocated_storage = 20
+db_name              = "mwanzo_prod"
+db_username          = "mwanzo_admin"
+db_password          = "CHANGE_ME_TO_STRONG_PASSWORD_MIN_16_CHARS"  # CHANGE THIS!
+
+# Backend Configuration (ECS Fargate)
+backend_cpu            = 1024  # 1 vCPU (512, 1024, 2048, 4096)
+backend_memory         = 2048  # 2 GB (must be compatible with CPU)
+backend_desired_count  = 2     # Number of containers
+backend_docker_image   = "your-ecr-repo-url/mwanzo-backend:latest"  # Update with your ECR URL
+
+# S3 Configuration
+s3_video_bucket_name = "mwanzo-videos-prod"  # Must be globally unique
+
+# Domain Configuration (Optional)
+domain_name     = ""  # e.g., "mwanzo.com" (leave empty if no domain)
+cdn_domain_name = ""  # e.g., "cdn.mwanzo.com" (leave empty if no domain)
+
+# Cost Optimization Flags
+enable_nat_gateway   = true   # Set to false to save $32/month (but private subnets lose internet)
+enable_multi_az_rds  = false  # Set to true for high availability (doubles RDS cost)
+enable_cloudfront    = true   # Recommended for production
+
+# Security
+jwt_secret        = "CHANGE_ME_TO_RANDOM_256_BIT_SECRET_KEY"  # Generate with: openssl rand -base64 32
+jwt_expiration_ms = 86400000  # 24 hours
+
+# Additional Tags
+tags = {
+  Owner       = "Your Name"
+  CostCenter  = "Engineering"
+  Compliance  = "None"
+}

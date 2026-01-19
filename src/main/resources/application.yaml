@@ -134,7 +134,26 @@ aws:
     secret-key: ${AWS_SECRET_KEY:test}
     use-localstack: ${USE_LOCALSTACK:true}
 
-# CloudFront configuration (Production only)
-cloudfront:
-  domain: ${CLOUDFRONT_DOMAIN:https://cdn.mwanzoskills.com}
-  enabled: ${CLOUDFRONT_ENABLED:false}
+  # ==============================================
+  cloudfront:
+    enabled: ${CLOUDFRONT_ENABLED:false}
+    domain: ${CLOUDFRONT_DOMAIN:}
+    key-pair-id: ${CLOUDFRONT_KEY_PAIR_ID:}
+    # Store the private key as base64 or file path
+    private-key: ${CLOUDFRONT_PRIVATE_KEY:}
+    signed-url-expiration-minutes: 120
+    signed-cookie-expiration-hours: 24
+
+  # ==============================================
+  # MediaConvert Configuration
+  # ==============================================
+  mediaconvert:
+    enabled: ${MEDIACONVERT_ENABLED:true}
+    use-mock: ${MEDIACONVERT_USE_MOCK:true}
+    endpoint: ${MEDIACONVERT_ENDPOINT:https://abc123.mediaconvert.us-east-1.amazonaws.com}
+    role-arn: ${MEDIACONVERT_ROLE_ARN:arn:aws:iam::123456789:role/MediaConvertRole}
+    queue-arn: ${MEDIACONVERT_QUEUE_ARN:arn:aws:mediaconvert:us-east-1:123456789:queues/Default}
+    output-bucket: ${MEDIACONVERT_OUTPUT_BUCKET:mwanzo-videos-processed}
+
+  ffmpeg:
+    binary-path: ${FFMPEG_BINARY_PATH:/usr/local/bin/ffmpeg}

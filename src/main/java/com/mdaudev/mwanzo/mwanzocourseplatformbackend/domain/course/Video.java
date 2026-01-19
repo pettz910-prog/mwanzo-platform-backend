@@ -14,31 +14,24 @@ import java.util.UUID;
 /**
  * Video Entity (Course Lesson)
  *
- * Represents individual video lessons within a course section.
- * Videos are stored in S3/CloudFront and streamed to students.
+ * Updated to support multi-quality video streaming with AWS MediaConvert.
  *
- * Database Table: videos
- *
- * Business Rules:
- * - Videos belong to one section
- * - Only enrolled students can watch videos
- * - Video progress tracked per student
- * - Videos can be marked as preview (free for everyone)
- *
- * Video Storage:
- * - Original uploaded to S3
- * - Transcoded by AWS MediaConvert (multiple qualities)
- * - Streamed via CloudFront CDN
+ * NEW FEATURES (v2.0):
+ * - Multi-quality transcoding (360p, 720p, 1080p)
+ * - Quality URLs stored as JSON
+ * - Processing job tracking
+ * - Error handling for failed transcoding
  *
  * @author Mwanzo Development Team
- * @version 1.0
- * @since 2026-01-12
+ * @version 2.0
+ * @since 2026-01-17
  */
 @Entity
 @Table(name = "videos", indexes = {
         @Index(name = "idx_video_section", columnList = "section_id"),
         @Index(name = "idx_video_course", columnList = "course_id"),
-        @Index(name = "idx_video_order", columnList = "section_id, display_order")
+        @Index(name = "idx_video_order", columnList = "section_id, display_order"),
+        @Index(name = "idx_video_processing", columnList = "processing_status")
 })
 @Data
 @NoArgsConstructor
@@ -86,25 +79,36 @@ public class Video {
 
     /**
      * Video duration in seconds.
+     * Automatically extracted by MediaConvert during transcoding.
      */
-    @Column(name = "duration_seconds", nullable = false)
+    @Column(name = "duration_seconds")
     private Integer durationSeconds;
 
     /**
-     * S3 key for the video file.
+     * S3 key for the ORIGINAL uploaded video file.
      * Example: "videos/uuid/filename.mp4"
      */
     @Column(name = "s3_key", nullable = false, length = 500)
     private String s3Key;
 
     /**
-     * S3 URL for original uploaded video.
+     * Primary video URL (defaults to highest quality available).
+     * Updated after transcoding completes.
      */
     @Column(name = "video_url", nullable = false, length = 500)
     private String videoUrl;
 
     /**
-     * CloudFront streaming URL (HLS/DASH).
+     * JSON object containing URLs for each quality level.
+     * Example: {"360p":"https://...", "720p":"https://...", "1080p":"https://..."}
+     *
+     * NEW: Supports adaptive streaming
+     */
+    @Column(name = "quality_urls_json", columnDefinition = "TEXT")
+    private String qualityUrlsJson;
+
+    /**
+     * CloudFront streaming URL (HLS/DASH manifest).
      * Used for adaptive bitrate streaming.
      */
     @Column(name = "streaming_url", length = 500)
@@ -118,20 +122,22 @@ public class Video {
     private String thumbnailS3Key;
 
     /**
-     * S3 URL for video thumbnail/poster image.
-     * REQUIRED for all videos.
+     * S3/CloudFront URL for video thumbnail/poster image.
+     * REQUIRED for all videos (instructor uploads).
      */
     @Column(name = "thumbnail_url", nullable = false, length = 500)
     private String thumbnailUrl;
 
     /**
      * Video quality (e.g., "1080p", "720p", "480p").
+     * Deprecated: Use qualityUrlsJson instead
      */
     @Column(name = "quality", length = 20)
+    @Deprecated
     private String quality;
 
     /**
-     * Video file size in bytes.
+     * Original video file size in bytes.
      */
     @Column(name = "file_size_bytes")
     private Long fileSizeBytes;
@@ -161,9 +167,25 @@ public class Video {
     private VideoProcessingStatus processingStatus = VideoProcessingStatus.UPLOADED;
 
     /**
-     * Video transcoding job ID (AWS MediaConvert).
+     * AWS MediaConvert job ID.
+     * NEW: Tracks transcoding job for status polling.
+     */
+    @Column(name = "processing_job_id", length = 200)
+    private String processingJobId;
+
+    /**
+     * Error message if processing failed.
+     * NEW: Helps debug transcoding failures.
+     */
+    @Column(name = "processing_error", columnDefinition = "TEXT")
+    private String processingError;
+
+    /**
+     * Transcoding job ID (AWS MediaConvert).
+     * @deprecated Use processingJobId instead
      */
     @Column(name = "transcoding_job_id", length = 100)
+    @Deprecated
     private String transcodingJobId;
 
     /**
@@ -186,6 +208,9 @@ public class Video {
      * Get duration in minutes (rounded up).
      */
     public Integer getDurationMinutes() {
+        if (durationSeconds == null || durationSeconds == 0) {
+            return 0;
+        }
         return (int) Math.ceil(durationSeconds / 60.0);
     }
 
@@ -209,5 +234,26 @@ public class Video {
      */
     public void markAsFailed() {
         this.processingStatus = VideoProcessingStatus.FAILED;
+    }
+
+    /**
+     * Check if video is ready for playback.
+     */
+    public boolean isReady() {
+        return processingStatus == VideoProcessingStatus.READY;
+    }
+
+    /**
+     * Check if video is still processing.
+     */
+    public boolean isProcessing() {
+        return processingStatus == VideoProcessingStatus.PROCESSING;
+    }
+
+    /**
+     * Check if video processing failed.
+     */
+    public boolean hasFailed() {
+        return processingStatus == VideoProcessingStatus.FAILED;
     }
 }

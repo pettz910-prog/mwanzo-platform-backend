@@ -1,0 +1,115 @@
+# ==============================================
+# DEVELOPMENT ENVIRONMENT CONFIGURATION
+# ==============================================
+# Activated with: --spring.profiles.active=dev
+# Or environment variable: SPRING_PROFILES_ACTIVE=dev
+# ==============================================
+
+# ==============================================
+# DATABASE (Local PostgreSQL)
+# ==============================================
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mwanzo_database
+    username: postgres
+    password: janet-marketing
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update tables in dev
+    show-sql: true     # Show SQL queries in console
+
+# ==============================================
+# LOGGING (Verbose for debugging)
+# ==============================================
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# ==============================================
+# APPLICATION BASE URL (Local)
+# ==============================================
+app:
+  base-url: http://localhost:8080
+
+# ==============================================
+# PAYHERO (Development - use test credentials)
+# ==============================================
+payhero:
+  callback-url: http://localhost:8080/api/v1/payments/callback
+
+# ==============================================
+# AWS S3 CONFIGURATION (LocalStack)
+# ==============================================
+aws:
+  s3:
+    endpoint: http://localhost:4566
+    region: us-east-1
+    bucket: mwanzo-videos
+    access-key: test
+    secret-key: test
+    use-localstack: true
+
+  # ==============================================
+  # AWS MediaConvert (MOCKED - No real AWS calls)
+  # ==============================================
+  mediaconvert:
+    enabled: true
+    use-mock: true              # ← MOCK MODE for local dev
+    mock-processing-seconds: 30  # Simulate 30-second processing
+    endpoint: http://localhost:4566  # LocalStack endpoint (unused in mock)
+    role-arn: arn:aws:iam::000000000000:role/MockMediaConvertRole
+    queue-arn: arn:aws:mediaconvert:us-east-1:000000000000:queues/Default
+    output-bucket: mwanzo-videos-processed
+
+  # ==============================================
+  # CloudFront (DISABLED - Use LocalStack URLs)
+  # ==============================================
+  cloudfront:
+    enabled: false
+    domain: http://localhost:4566  # Fallback to LocalStack
+
+# ==============================================
+# FFmpeg Configuration (DISABLED - MediaConvert handles)
+# ==============================================
+ffmpeg:
+  enabled: false  # We use MediaConvert instead (even in dev mock mode)
+  binary-path: /usr/local/bin/ffmpeg
+  probe-path: /usr/local/bin/ffprobe
+  timeout-seconds: 300
+
+# ==============================================
+# Video Processing Configuration
+# ==============================================
+video:
+  processing:
+    # Quality presets for transcoding
+    qualities:
+      - name: 360p
+        width: 640
+        height: 360
+        bitrate: 800000      # 800 Kbps
+        enabled: true
+      - name: 720p
+        width: 1280
+        height: 720
+        bitrate: 2500000     # 2.5 Mbps
+        enabled: true
+      - name: 1080p
+        width: 1920
+        height: 1080
+        bitrate: 5000000     # 5 Mbps
+        enabled: true
+
+    # Thumbnail generation
+    thumbnail:
+      enabled: true
+      auto-generate: false  # Instructor uploads manually
+      timestamp-seconds: 3  # If auto-generate enabled, use 3-second mark
+      width: 640
+      height: 360
+      format: jpg
+      quality: 85

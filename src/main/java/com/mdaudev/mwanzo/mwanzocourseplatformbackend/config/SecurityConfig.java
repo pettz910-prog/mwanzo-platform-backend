@@ -1,49 +1,49 @@
 package com.mdaudev.mwanzo.mwanzocourseplatformbackend.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-/**
- * Security Configuration for Mwanzo Course Platform
- *
- * Purpose: Configure Spring Security for the application
- * Status: Development mode - permits all requests temporarily
- *
- * @author Mwanzo Development Team
- * @version 1.0
- * @since 2026-01-09
- */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    /**
-     * Configures HTTP security for the application.
-     *
-     * IMPORTANT: This is a TEMPORARY configuration for development.
-     * Before production, we will implement:
-     * - JWT authentication
-     * - Role-based access control (RBAC)
-     * - CSRF protection for state-changing operations
-     * - Secure password encoding
-     *
-     * @param http HttpSecurity object to configure
-     * @return SecurityFilterChain with security rules
-     * @throws Exception if configuration fails
-     */
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // Disable CSRF temporarily (we'll enable it later with proper token handling)
-                .csrf(AbstractHttpConfigurer::disable)
+    private final CorsConfigurationSource corsConfigurationSource;
 
-                // Permit all requests without authentication (TEMPORARY)
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
+                // Disable CSRF for stateless API
+                .csrf(csrf -> csrf.disable())
+
+                // Configure authorization
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        // Public endpoints
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/api/v1/courses/**",
+                                "/api/v1/categories/**",
+                                "/api/v1/payments/callback",
+                                "/api/v1/webhooks/**",
+                                "/api/health"
+                        ).permitAll()
+
+                        // All other endpoints require authentication
+                        .anyRequest().authenticated()
+                )
+
+                // Stateless session management
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
         return http.build();

@@ -1,0 +1,144 @@
+# ==============================================
+# PRODUCTION ENVIRONMENT CONFIGURATION
+# ==============================================
+# Activated with: SPRING_PROFILES_ACTIVE=prod
+# IMPORTANT: All secrets MUST be in environment variables!
+# ==============================================
+
+# ==============================================
+# DATABASE (Production PostgreSQL/RDS)
+# ==============================================
+spring:
+  datasource:
+    url: ${DATABASE_URL}  # e.g., jdbc:postgresql://mwanzo-db.abc123.us-east-1.rds.amazonaws.com:5432/mwanzo_prod
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # NEVER update/create in production!
+    show-sql: false      # Don't log SQL in production
+
+# ==============================================
+# LOGGING (Production - Less verbose)
+# ==============================================
+logging:
+  level:
+    root: WARN
+    com.mdaudev.mwanzo: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+  file:
+    name: /var/log/mwanzo/application.log
+    max-size: 100MB
+    max-history: 30
+
+# ==============================================
+# APPLICATION BASE URL (Production Domain)
+# ==============================================
+app:
+  base-url: ${APP_BASE_URL:https://api.mwanzoskills.co.ke}
+
+# ==============================================
+# JWT (MUST use strong secret from env)
+# ==============================================
+jwt:
+  secret: ${JWT_SECRET}  # REQUIRED: Set strong 256-bit secret
+  expiration: 86400000
+
+# ==============================================
+# PAYHERO (Production)
+# ==============================================
+payhero:
+  api-username: ${PAYHERO_USERNAME}  # REQUIRED
+  api-password: ${PAYHERO_PASSWORD}  # REQUIRED
+  channel-id: ${PAYHERO_CHANNEL_ID}  # REQUIRED
+  callback-url: ${app.base-url}/api/v1/payments/callback
+
+# ==============================================
+# AWS S3 CONFIGURATION (Real AWS)
+# ==============================================
+aws:
+  s3:
+    # No endpoint - uses default AWS S3
+    region: ${AWS_REGION:us-east-1}
+    bucket: ${AWS_S3_BUCKET:mwanzo-videos-prod}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    use-localstack: false
+
+  # ==============================================
+  # AWS MediaConvert (REAL AWS - Transcoding)
+  # ==============================================
+  mediaconvert:
+    enabled: true
+    use-mock: false  # ← REAL AWS MODE
+    endpoint: ${AWS_MEDIACONVERT_ENDPOINT}  # e.g., https://abc123.mediaconvert.us-east-1.amazonaws.com
+    role-arn: ${AWS_MEDIACONVERT_ROLE_ARN}  # e.g., arn:aws:iam::123456789:role/MediaConvertRole
+    queue-arn: ${AWS_MEDIACONVERT_QUEUE_ARN:}  # Optional: Default queue if empty
+    output-bucket: ${AWS_MEDIACONVERT_OUTPUT_BUCKET:mwanzo-videos-processed}
+    sns-topic-arn: ${AWS_MEDIACONVERT_SNS_TOPIC:}  # Optional: For webhooks
+
+  # ==============================================
+  # CloudFront (ENABLED - Fast CDN delivery)
+  # ==============================================
+  cloudfront:
+    enabled: true
+    domain: ${CLOUDFRONT_DOMAIN}  # e.g., https://d123abc.cloudfront.net
+    signing-enabled: false  # Set true for signed URLs (private videos)
+    key-pair-id: ${CLOUDFRONT_KEY_PAIR_ID:}  # If signing enabled
+    private-key-path: ${CLOUDFRONT_PRIVATE_KEY_PATH:}  # If signing enabled
+
+# ==============================================
+# FFmpeg (Disabled in prod - MediaConvert handles)
+# ==============================================
+ffmpeg:
+  enabled: false  # MediaConvert extracts duration
+  binary-path: /usr/bin/ffmpeg
+  probe-path: /usr/bin/ffprobe
+
+# ==============================================
+# Video Processing (Production Settings)
+# ==============================================
+video:
+  processing:
+    qualities:
+      - name: 360p
+        width: 640
+        height: 360
+        bitrate: 800000
+        enabled: true
+      - name: 720p
+        width: 1280
+        height: 720
+        bitrate: 2500000
+        enabled: true
+      - name: 1080p
+        width: 1920
+        height: 1080
+        bitrate: 5000000
+        enabled: true
+      - name: 1440p
+        width: 2560
+        height: 1440
+        bitrate: 10000000
+        enabled: false  # Enable if needed
+
+    thumbnail:
+      enabled: true
+      auto-generate: false
+      timestamp-seconds: 3
+      width: 640
+      height: 360
+      format: jpg
+      quality: 85
+
+# ==============================================
+# Security Settings (Production)
+# ==============================================
+server:
+  ssl:
+    enabled: ${SSL_ENABLED:false}  # Set true if using HTTPS
+    key-store: ${SSL_KEY_STORE_PATH:}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:}
+    key-store-type: PKCS12

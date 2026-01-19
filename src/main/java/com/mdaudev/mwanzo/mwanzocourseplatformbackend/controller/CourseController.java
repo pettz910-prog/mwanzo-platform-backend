@@ -37,8 +37,8 @@ import java.util.UUID;
  * - GET    /api/v1/courses/free               - Get free courses
  *
  * Instructor Endpoints (to be secured):
- * - POST   /api/v1/courses                    - Create new course
- * - GET    /api/v1/courses/instructor/{id}    - Get instructor's courses
+ * - POST   /api/v1/courses/instructor/{instructorId} - Create new course
+ * - GET    /api/v1/courses/instructor/{id}           - Get instructor's courses
  *
  * @author Mwanzo Development Team
  * @version 1.0
@@ -266,19 +266,21 @@ public class CourseController {
     /**
      * Create a new course (Instructor only).
      * TODO: Add @PreAuthorize("hasRole('INSTRUCTOR')") when security is implemented
-     * TODO: Extract instructorId from JWT token instead of request param
+     * TODO: Extract instructorId from JWT token instead of path variable
      *
+     * Example: POST /api/v1/courses/instructor/123e4567-e89b-12d3-a456-426614174000
+     *
+     * @param instructorId Instructor UUID (TEMPORARY - will come from JWT token later)
      * @param request Course creation request with validation
-     * @param instructorId Temporary: Instructor UUID (will come from JWT later)
      * @return Created course detail DTO
      */
-    @PostMapping
+    @PostMapping("/instructor/{instructorId}")
     public ResponseEntity<CourseDetailDTO> createCourse(
-            @Valid @RequestBody CreateCourseRequest request,
-            @RequestParam UUID instructorId) {  // TEMPORARY - will come from JWT token
+            @PathVariable UUID instructorId,
+            @Valid @RequestBody CreateCourseRequest request) {
 
-        log.info("POST /api/v1/courses - Creating course: {} by instructor: {}",
-                request.getTitle(), instructorId);
+        log.info("POST /api/v1/courses/instructor/{} - Creating course: {}",
+                instructorId, request.getTitle());
 
         CourseDetailDTO course = courseService.createCourse(request, instructorId);
 

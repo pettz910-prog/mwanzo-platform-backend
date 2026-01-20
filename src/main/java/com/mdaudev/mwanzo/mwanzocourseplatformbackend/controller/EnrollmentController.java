@@ -54,12 +54,12 @@ public class EnrollmentController {
      */
     @PostMapping("/{courseId}")
     public ResponseEntity<EnrollmentDTO> enrollInCourse(
-            @PathVariable UUID courseId,
-            @RequestParam UUID studentId) {  // TEMPORARY - will come from JWT token
+            @PathVariable String courseId,
+            @RequestParam String studentId) {  // TEMPORARY - will come from JWT token
 
         log.info("POST /api/v1/enrollments/{} - Enrolling student {}", courseId, studentId);
 
-        EnrollmentDTO enrollment = enrollmentService.enrollInCourse(studentId, courseId);
+        EnrollmentDTO enrollment = enrollmentService.enrollInCourse(UUID.fromString(studentId), UUID.fromString(courseId));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(enrollment);
     }
@@ -74,14 +74,14 @@ public class EnrollmentController {
      */
     @GetMapping
     public ResponseEntity<Page<EnrollmentDTO>> getMyEnrollments(
-            @RequestParam UUID studentId,  // TEMPORARY
+            @RequestParam String studentId,  // TEMPORARY
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
         log.info("GET /api/v1/enrollments - Fetching enrollments for student {}", studentId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<EnrollmentDTO> enrollments = enrollmentService.getStudentEnrollments(studentId, pageable);
+        Page<EnrollmentDTO> enrollments = enrollmentService.getStudentEnrollments(UUID.fromString(studentId), pageable);
 
         return ResponseEntity.ok(enrollments);
     }
@@ -97,14 +97,14 @@ public class EnrollmentController {
      */
     @GetMapping("/active")
     public ResponseEntity<Page<EnrollmentDTO>> getActiveCourses(
-            @RequestParam UUID studentId,  // TEMPORARY
+            @RequestParam String studentId,  // TEMPORARY
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
         log.info("GET /api/v1/enrollments/active - Fetching active enrollments for student {}", studentId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("lastAccessedAt").descending());
-        Page<EnrollmentDTO> enrollments = enrollmentService.getActiveEnrollments(studentId, pageable);
+        Page<EnrollmentDTO> enrollments = enrollmentService.getActiveEnrollments(UUID.fromString(studentId), pageable);
 
         return ResponseEntity.ok(enrollments);
     }
@@ -116,10 +116,10 @@ public class EnrollmentController {
      * @return Enrollment DTO
      */
     @GetMapping("/{enrollmentId}")
-    public ResponseEntity<EnrollmentDTO> getEnrollmentById(@PathVariable UUID enrollmentId) {
+    public ResponseEntity<EnrollmentDTO> getEnrollmentById(@PathVariable String enrollmentId) {
         log.info("GET /api/v1/enrollments/{} - Fetching enrollment", enrollmentId);
 
-        EnrollmentDTO enrollment = enrollmentService.getEnrollmentById(enrollmentId);
+        EnrollmentDTO enrollment = enrollmentService.getEnrollmentById(UUID.fromString(enrollmentId));
 
         return ResponseEntity.ok(enrollment);
     }
@@ -134,14 +134,14 @@ public class EnrollmentController {
      */
     @GetMapping("/check/{courseId}")
     public ResponseEntity<EnrollmentCheckResponse> checkEnrollment(
-            @PathVariable UUID courseId,
-            @RequestParam UUID studentId) {  // TEMPORARY
+            @PathVariable String courseId,
+            @RequestParam String studentId) {  // TEMPORARY
 
         log.info("GET /api/v1/enrollments/check/{} - Checking enrollment for student {}",
                 courseId, studentId);
 
-        boolean isEnrolled = enrollmentService.isEnrolled(studentId, courseId);
-        boolean hasAccess = enrollmentService.hasAccess(studentId, courseId);
+        boolean isEnrolled = enrollmentService.isEnrolled(UUID.fromString(studentId), UUID.fromString(courseId));
+        boolean hasAccess = enrollmentService.hasAccess(UUID.fromString(studentId), UUID.fromString(courseId));
 
         EnrollmentCheckResponse response = EnrollmentCheckResponse.builder()
                 .isEnrolled(isEnrolled)
